@@ -19,6 +19,11 @@ h1{margin:0;font-size:34px}
 .install{display:block;background:#1547ff;color:white;text-decoration:none;text-align:center;font-size:23px;font-weight:bold;padding:18px;border-radius:40px;margin:25px 0}
 .sub{text-align:center;color:#ddd;margin-top:-10px}
 .actions{display:flex;justify-content:space-around;color:#80d8ff;font-size:20px;margin:35px 0}
+.action-btn{background:none;border:none;color:#80d8ff;font-size:20px;font-family:inherit;cursor:pointer;padding:10px 16px;border-radius:12px}
+.action-btn:active{background:rgba(128,216,255,.12)}
+.action-btn.saved{color:#ffd54f}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#3c4043;color:#fff;padding:12px 22px;border-radius:24px;font-size:15px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:100;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.4)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 h2{font-size:28px;margin-top:45px;margin-bottom:18px}
 p{line-height:1.55;color:#eee;font-size:18px}
 .box{background:#2b2c2f;border-radius:18px;padding:16px;margin-top:18px}
@@ -75,8 +80,8 @@ p{line-height:1.55;color:#eee;font-size:18px}
   <div class="sub">Download APK to your Android phone.</div>
 
   <div class="actions">
-    <div>↗ Share</div>
-    <div>☆ Save</div>
+    <button type="button" class="action-btn" id="shareBtn">↗ Share</button>
+    <button type="button" class="action-btn" id="saveBtn">☆ Save</button>
   </div>
 
   <h2>About this app</h2>
@@ -187,5 +192,78 @@ p{line-height:1.55;color:#eee;font-size:18px}
   <div class="nav-item"><span class="ico">🎬</span>Movies</div>
   <div class="nav-item"><span class="ico">📚</span>Books</div>
 </div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  var SAVE_KEY = 'amazon-investment-saved';
+  var shareBtn = document.getElementById('shareBtn');
+  var saveBtn = document.getElementById('saveBtn');
+  var toast = document.getElementById('toast');
+  var toastTimer;
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      toast.classList.remove('show');
+    }, 2200);
+  }
+
+  function copyUrl() {
+    var url = window.location.href.split('?')[0].split('#')[0];
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(url);
+    }
+    return new Promise(function (resolve, reject) {
+      var input = document.createElement('textarea');
+      input.value = url;
+      input.setAttribute('readonly', '');
+      input.style.position = 'fixed';
+      input.style.left = '-9999px';
+      document.body.appendChild(input);
+      input.select();
+      try {
+        document.execCommand('copy') ? resolve() : reject();
+      } catch (e) {
+        reject(e);
+      }
+      document.body.removeChild(input);
+    });
+  }
+
+  function updateSaveBtn() {
+    var saved = localStorage.getItem(SAVE_KEY) === '1';
+    saveBtn.textContent = saved ? '★ Saved' : '☆ Save';
+    saveBtn.classList.toggle('saved', saved);
+  }
+
+  shareBtn.addEventListener('click', function () {
+    copyUrl()
+      .then(function () {
+        showToast('Link copied!');
+      })
+      .catch(function () {
+        showToast('Could not copy link');
+      });
+  });
+
+  saveBtn.addEventListener('click', function () {
+    var saved = localStorage.getItem(SAVE_KEY) === '1';
+    if (saved) {
+      localStorage.removeItem(SAVE_KEY);
+      showToast('Removed from wishlist');
+    } else {
+      localStorage.setItem(SAVE_KEY, '1');
+      showToast('Added to wishlist');
+    }
+    updateSaveBtn();
+  });
+
+  updateSaveBtn();
+})();
+</script>
 </body>
 </html>
